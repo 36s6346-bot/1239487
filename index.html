@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학교 안의 작은 문제를 AI로 탐구하다 - 창밖 날씨 판별기</title>
+    
+    <!-- TensorFlow.js 및 Teachable Machine Image 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #FAF8F5;
+            --card-bg: #FFFFFF;
+            --sky-blue: #87CEEB;
+            --sky-blue-hover: #70C1E5;
+            --sky-blue-light: #F0F9FF;
+            --text-main: #2C3E50;
+            --text-sub: #64748B;
+            --gold-frame: linear-gradient(135deg, #F6D365 0%, #FDA085 40%, #E6CA65 70%, #B8860B 100%);
+            --metallic-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.9), 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+            padding: 32px 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* 은은한 물방울 배경 장식 */
+        .droplet-bg {
+            position: fixed;
+            top: -80px;
+            right: -80px;
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(135, 206, 235, 0.25) 0%, rgba(250, 248, 245, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 입체감 있는 금속 테두리 카드 프레임 */
+        .gold-border-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3px;
+            background-image: var(--gold-frame);
+            box-shadow: var(--metallic-shadow);
+        }
+
+        .card-inner {
+            background: var(--card-bg);
+            border-radius: 17px;
+            padding: 28px 24px;
+            height: 100%;
+        }
+
+        /* 메인 헤더 */
+        header .card-inner {
+            background: linear-gradient(180deg, #FFFFFF 0%, #F4F9FF 100%);
+        }
+
+        .header-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .droplet-icon {
+            width: 28px;
+            height: 28px;
+            fill: var(--sky-blue);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* 카드별 소제목 및 줄글 스타일링 */
+        .section-heading {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-heading::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background-color: var(--sky-blue);
+            border-radius: 2px;
+        }
+
+        .prose-paragraph {
+            font-size: 0.95rem;
+            color: #334155;
+            word-break: keep-all;
+            margin-bottom: 12px;
+        }
+
+        .prose-paragraph:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 컨트롤 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 52px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-start {
+            background-color: var(--sky-blue);
+            color: #FFFFFF;
+        }
+
+        .btn-start:hover {
+            background-color: var(--sky-blue-hover);
+        }
+
+        .btn-stop {
+            background-color: #E2E8F0;
+            color: #64748B;
+        }
+
+        .btn-stop:enabled {
+            background-color: #FF7676;
+            color: #FFFFFF;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 웹캠 고정 프레임 */
+        .webcam-wrapper {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background-color: #F8FAFC;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 2px dashed #CBD5E1;
+        }
+
+        #webcam-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+
+        .webcam-placeholder {
+            position: absolute;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        /* 상태 안내 및 에러 메시지 */
+        .status-message {
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 12px;
+            color: var(--sky-blue-hover);
+            font-weight: 600;
+            min-height: 20px;
+        }
+
+        .error-message {
+            background-color: #FFEDED;
+            color: #E53E3E;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+            word-break: keep-all;
+        }
+
+        /* 최우선 예측 강조 박스 */
+        .top-prediction-box {
+            background-color: var(--sky-blue-light);
+            padding: 18px;
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #BAE6FD;
+        }
+
+        .top-prediction-title {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .top-prediction-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .disclaimer-text {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            margin-top: 6px;
+        }
+
+        /* 게이지 바 목록 */
+        .label-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bar-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 14px;
+            background-color: #E2E8F0;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background-color: var(--sky-blue);
+            width: 0%;
+            transition: width 0.2s ease-out;
+            border-radius: 7px;
+        }
+
+        /* 푸터 */
+        footer {
+            text-align: center;
+            padding: 16px 12px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        .team-info {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 배경 물방울 장식 -->
+    <div class="droplet-bg"></div>
+
+    <div class="container">
+        <!-- 1. 프로젝트 타이틀 및 개요 문단 -->
+        <header class="gold-border-card">
+            <div class="card-inner">
+                <div class="header-title-wrap">
+                    <svg class="droplet-icon" viewBox="0 0 24 24">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <h1>학교 안의 작은 문제를 AI로 탐구하다</h1>
+                </div>
+                <p class="prose-paragraph">
+                    학교생활을 하다 보면 쉬는 시간이나 하교 직전에 창밖 날씨가 궁금해지는 순간이 많습니다. 우리는 복도 끝이나 교실 바깥으로 직접 나가지 않고도 창가의 상황을 인공지능으로 미리 파악할 수 있는 방안을 고민하게 되었습니다.
+                </p>
+                <p class="prose-paragraph">
+                    이 프로젝트는 고등학생들의 일상 속 소소한 궁금증과 불편을 해소하기 위해 시작되었습니다. 창가 풍경 이미지를 인공지능에 학습시켜, 학생들이 실시간으로 날씨 상태를 확인할 수 있는 간결하고 유용한 웹 체험 공간을 제공합니다.
+                </p>
+            </div>
+        </header>
+
+        <!-- 2. 해결하려는 문제 문단 -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">해결하려는 문제</h2>
+                <p class="prose-paragraph">
+                    수업이 끝나거나 다음 교시를 준비할 때, 밖에 비가 내리고 있는지 확인하기 위해 매번 멀리 떨어진 창문이나 복도로 이동하는 것은 다소 번거로운 일입니다. 특히 이동 수업이나 급식실 이동 전 날씨를 미리 파악하지 못해 당황하는 경우가 자주 발생하곤 합니다.
+                </p>
+                <p class="prose-paragraph">
+                    우리는 이러한 문제를 해결하기 위해 창밖을 향한 카메라 입력만으로 현재 날씨 상태를 분류해 내는 인공지능 탐구 모델을 기획했습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. 주요 사용자 문단 -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">주요 사용자</h2>
+                <p class="prose-paragraph">
+                    본 웹 서비스의 핵심 사용자는 교실 안에서 빽빽한 일정을 보내는 고등학생들입니다. 쉬는 시간이나 점심시간, 그리고 하교 직전 교실을 나서기 전 빠르게 날씨 변화를 파악하고자 하는 학생들에게 가장 최적화되어 있습니다.
+                </p>
+                <p class="prose-paragraph">
+                    스마트폰을 이용해 언제 어디서나 손쉽게 접속하여 직관적인 분석 결과를 얻을 수 있도록 사용자 환경을 구성하였습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 4. 모델이 구분하는 실제 클래스 문단 -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">모델이 구분하는 클래스</h2>
+                <p class="prose-paragraph">
+                    저희가 구축한 티처블 머신 이미지 분류 모델은 창밖 풍경 데이터를 학습하여 현재 상태를 정확히 두 가지 클래스로 구분합니다.
+                </p>
+                <p class="prose-paragraph">
+                    분류 기준이 되는 실제 클래스는 <strong>비</strong>와 <strong>맑음</strong>입니다. 실시간으로 입력되는 카메라 영상 분석을 거쳐 각 클래스에 해당할 확률을 백분율로 계산해냅니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 5. AI 실시간 체험 영역 (중심 기능) -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">실시간 AI 모델 체험하기</h2>
+                
+                <!-- 시작 / 중지 버튼 -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-start" id="start-btn" onclick="init()">카메라 시작</button>
+                    <button type="button" class="btn btn-stop" id="stop-btn" onclick="stopWebcam()" disabled>중지</button>
+                </div>
+
+                <!-- 상태 및 에러 안내 -->
+                <div class="status-message" id="status-msg"></div>
+                <div class="error-message" id="error-msg"></div>
+
+                <!-- 웹캠 화면 출력 -->
+                <div class="webcam-wrapper">
+                    <div class="webcam-placeholder" id="placeholder-text">
+                        '카메라 시작' 버튼을 누르면 실시간 창밖 날씨 분석이 시작됩니다.
+                    </div>
+                    <div id="webcam-container"></div>
+                </div>
+
+                <!-- 최우선 예측 결과 하이라이트 -->
+                <div class="top-prediction-box">
+                    <div class="top-prediction-title">현재 감지된 날씨</div>
+                    <div class="top-prediction-value" id="top-prediction">-</div>
+                    <div class="disclaimer-text">* 가장 높은 확률의 예측 결과이며, 실제 날씨와 차이가 있을 수 있습니다.</div>
+                </div>
+
+                <!-- 전체 클래스 확률 프로그레스 바 -->
+                <div class="label-container" id="label-container"></div>
+            </div>
+        </section>
+
+        <!-- 6. 모델의 한계 및 사람이 확인해야 할 부분 문단 -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">모델의 한계와 사람의 역할</h2>
+                <p class="prose-paragraph">
+                    인공지능 모델이 모든 상황을 완벽하게 판별하는 것은 아닙니다. 데이터 수집 환경의 특성상 현재 모델은 <strong>맑음</strong>으로 판단하는 경향이 상대적으로 더 높게 나타나는 한계점을 가지고 있습니다.
+                </p>
+                <p class="prose-paragraph">
+                    따라서 화면에 나타나는 인공지능의 예측 결과만을 과신하기보다는, 보다 확실한 판단을 위해 창밖에서 <strong>빗소리가 나고 있지는 않은지</strong> 직접 귀로 소리를 들어 확인해보는 교차 검증 과정이 반드시 필요합니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 7. 팀명 및 팀원 문단 -->
+        <section class="gold-border-card">
+            <div class="card-inner">
+                <h2 class="section-heading">탐구 팀 소개</h2>
+                <p class="prose-paragraph">
+                    이 프로젝트는 인공지능을 활용해 학교생활의 작지만 실질적인 문제를 스스로 찾아내고 해결하고자 결정된 팀 프로젝트입니다.
+                </p>
+                <p class="prose-paragraph">
+                    팀명은 <strong>콩나물국</strong>이며, 팀원 <strong>강서윤</strong>, <strong>김나연</strong> 학생이 수집한 데이터와 모델링을 바탕으로 제작되었습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 푸터 -->
+        <footer>
+            <p class="team-info">팀 콩나물국 (강서윤, 김나연)</p>
+            <p>© 2026 School AI Project. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Teachable Machine 모델 공유 URL
+        const URL = "https://teachablemachine.withgoogle.com/models/XilyKlHnOM/";
+
+        let model, webcam, labelContainer, maxPredictions;
+        let isRunning = false;
+        let animationFrameId = null;
+
+        // 카메라 및 모델 초기화/시작
+        async function init() {
+            if (isRunning) return;
+
+            const startBtn = document.getElementById("start-btn");
+            const stopBtn = document.getElementById("stop-btn");
+            const statusMsg = document.getElementById("status-msg");
+            const errorMsg = document.getElementById("error-msg");
+
+            startBtn.disabled = true;
+            errorMsg.style.display = "none";
+            statusMsg.innerText = "모델 파일 및 카메라를 불러오는 중입니다...";
+
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            try {
+                // 1. 모델과 메타데이터 로드
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                // 2. 웹캠 생성 및 설정 (200x200 규격)
+                const flip = true; 
+                webcam = new tmImage.Webcam(200, 200, flip); 
+                
+                await webcam.setup(); 
+                await webcam.play();
+                
+                isRunning = true;
+                stopBtn.disabled = false;
+                statusMsg.innerText = "실시간 분석 진행 중...";
+                document.getElementById("placeholder-text").style.display = "none";
+
+                // 웹캠 캔버스 출력
+                const webcamContainer = document.getElementById("webcam-container");
+                webcamContainer.innerHTML = "";
+                webcamContainer.appendChild(webcam.canvas);
+
+                // 메타데이터의 실시간 예측 게이지 바 구조 생성
+                labelContainer = document.getElementById("label-container");
+                labelContainer.innerHTML = ""; 
+                for (let i = 0; i < maxPredictions; i++) {
+                    const className = model.getClassLabels()[i];
+                    
+                    const barItem = document.createElement("div");
+                    barItem.className = "bar-item";
+                    barItem.innerHTML = `
+                        <div class="bar-info">
+                            <span>${className}</span>
+                            <span id="percent-${i}">0%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" id="fill-${i}"></div>
+                        </div>
+                    `;
+                    labelContainer.appendChild(barItem);
+                }
+
+                // 예측 애니메이션 프레임 루프 실행
+                window.requestAnimationFrame(loop);
+
+            } catch (error) {
+                console.error(error);
+                statusMsg.innerText = "";
+                errorMsg.style.display = "block";
+                
+                if (error.name === "NotAllowedError" || error.message.includes("permission")) {
+                    errorMsg.innerText = "카메라 사용 권한이 거부되었습니다. 브라우저 설정에서 카메라 사용을 허용해 주세요.";
+                } else if (error.name === "NotFoundError" || error.message.includes("DevicesNotFoundError")) {
+                    errorMsg.innerText = "연결된 카메라 장치를 찾을 수 없습니다.";
+                } else {
+                    errorMsg.innerText = "모델을 불러오지 못했거나 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+                }
+
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                isRunning = false;
+            }
+        }
+
+        // 반복 프레임 수행
+        async function loop() {
+            if (!isRunning) return;
+            webcam.update(); 
+            await predict();
+            animationFrameId = window.requestAnimationFrame(loop);
+        }
+
+        // 실시간 예측 동작
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            
+            let highestProb = -1;
+            let highestClass = "";
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const className = prediction[i].className;
+                const probability = prediction[i].probability;
+                const percentage = Math.round(probability * 100);
+
+                const fillElement = document.getElementById(`fill-${i}`);
+                const percentElement = document.getElementById(`percent-${i}`);
+
+                if (fillElement && percentElement) {
+                    fillElement.style.width = percentage + "%";
+                    percentElement.innerText = percentage + "%";
+                }
+
+                if (probability > highestProb) {
+                    highestProb = probability;
+                    highestClass = className;
+                }
+            }
+
+            const topPredictionElement = document.getElementById("top-prediction");
+            if (topPredictionElement) {
+                topPredictionElement.innerText = `${highestClass} (${Math.round(highestProb * 100)}%)`;
+            }
+        }
+
+        // 웹캠 동작 및 예측 루프 완전 중지
+        function stopWebcam() {
+            if (!isRunning) return;
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            if (webcam) {
+                webcam.stop();
+            }
+
+            isRunning = false;
+
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("stop-btn").disabled = true;
+            document.getElementById("status-msg").innerText = "카메라 작동이 중지되었습니다.";
+            document.getElementById("placeholder-text").style.display = "block";
+            
+            const webcamContainer = document.getElementById("webcam-container");
+            webcamContainer.innerHTML = "";
+
+            document.getElementById("top-prediction").innerText = "-";
+        }
+    </script>
+</body>
+</html>
