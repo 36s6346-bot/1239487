@@ -11,15 +11,40 @@
 
     <style>
         :root {
-            --bg-color: #FAF8F5;
-            --card-bg: #FFFFFF;
+            --bg-color: #F8FAFC;
+            --card-bg: rgba(255, 255, 255, 0.92);
             --sky-blue: #87CEEB;
-            --sky-blue-hover: #70C1E5;
+            --sky-blue-hover: #60A5FA;
             --sky-blue-light: #F0F9FF;
-            --text-main: #2C3E50;
+            --text-main: #1E293B;
             --text-sub: #64748B;
             --gold-frame: linear-gradient(135deg, #F6D365 0%, #FDA085 40%, #E6CA65 70%, #B8860B 100%);
-            --metallic-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.9), 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --metallic-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.9), 0 12px 30px -5px rgba(0, 0, 0, 0.08);
+            --transition-theme: background-color 1.5s ease, color 1.5s ease;
+        }
+
+        /* 맑음 테마 스타일 */
+        body.sunny-theme {
+            --bg-color: #FFFDF0;
+            --sky-blue: #FBBF24;
+            --sky-blue-hover: #F59E0B;
+            --sky-blue-light: #FEF3C7;
+            --text-main: #451A03;
+            --text-sub: #78350F;
+        }
+
+        /* 화면 흔들림(진동) 애니메이션 */
+        @keyframes shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-15px, 10px) rotate(-2deg); }
+            40% { transform: translate(15px, -10px) rotate(2deg); }
+            60% { transform: translate(-10px, -5px) rotate(-1deg); }
+            80% { transform: translate(10px, 5px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        body.screen-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
 
         * {
@@ -32,81 +57,423 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            line-height: 1.7;
-            padding: 32px 16px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 520px;
+            line-height: 1.6;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            overflow-x: hidden;
+            position: relative;
+            transition: var(--transition-theme);
         }
 
-        /* 은은한 물방울 배경 장식 */
-        .droplet-bg {
+        /* ---------------- [화면 날아오기 & 깨짐 효과 레이어] ---------------- */
+        .impact-overlay {
             position: fixed;
-            top: -80px;
-            right: -80px;
-            width: 280px;
-            height: 280px;
-            background: radial-gradient(circle, rgba(135, 206, 235, 0.25) 0%, rgba(250, 248, 245, 0) 70%);
-            border-radius: 50%;
-            z-index: -1;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .flying-object {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.01) rotate(0deg);
+            transition: transform 0.6s cubic-bezier(0.11, 0, 0.5, 0), opacity 0.2s ease;
+        }
+
+        .flying-object.fly-in {
+            opacity: 1;
+            transform: scale(10) rotate(360deg);
+        }
+
+        .shatter-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* ---------------- [개인정보 동의 모달] ---------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 0, 0, 0.88);
+            backdrop-filter: blur(12px);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #0F172A;
+            border-radius: 20px;
+            max-width: 520px;
+            width: 100%;
+            padding: 28px;
+            box-shadow: 0 0 35px rgba(220, 38, 38, 0.5);
+            border: 2px solid #EF4444;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: pulseDanger 2s infinite alternate;
+        }
+
+        @keyframes pulseDanger {
+            0% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
+            100% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.8); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: #F87171;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-body {
+            font-size: 0.88rem;
+            color: #E2E8F0;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #1E293B;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #475569;
+        }
+
+        .modal-body ul {
+            margin-left: 20px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            color: #FCA5A5;
+        }
+
+        .modal-body li {
+            margin-bottom: 4px;
+        }
+
+        .consent-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #F87171;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .consent-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #EF4444;
+        }
+
+        .modal-btn {
+            background-color: #DC2626;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+        }
+
+        .modal-btn:hover {
+            background-color: #B91C1C;
+            transform: scale(1.02);
+        }
+
+        /* ---------------- [인터랙티브 캔버스 & 요소] ---------------- */
+        #rain-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 30;
             pointer-events: none;
         }
 
-        /* 입체감 있는 금속 테두리 카드 프레임 */
+        .sun-container {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            z-index: 40;
+            cursor: grab;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .sun-container.show {
+            transform: translateX(-50%) scale(1);
+        }
+
+        .sun-icon {
+            width: 90px;
+            height: 90px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.6));
+            animation: spinSun 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes spinSun {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .sun-tooltip {
+            background: rgba(245, 158, 11, 0.9);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-top: 4px;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            pointer-events: none;
+        }
+
+        .umbrella-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        .umbrella-icon {
+            width: 60px;
+            height: 60px;
+            background: #FFFFFF;
+            border: 2px solid var(--sky-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .umbrella-icon:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .umbrella-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: #2563EB;
+        }
+
+        .umbrella-counter {
+            background: rgba(15, 23, 42, 0.8);
+            color: #FFFFFF;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+
+        .reset-btn {
+            display: none;
+            margin-top: 4px;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: #2563EB;
+            transform: scale(1.1);
+        }
+
+        .audio-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #CBD5E1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .audio-btn {
+            background: var(--sky-blue);
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* ---------------- [상단 내비게이션 바] ---------------- */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 12px 24px;
+        }
+
+        .nav-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        .nav-logo svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--sky-blue);
+        }
+
+        .nav-badge {
+            background-color: var(--sky-blue-light);
+            color: #2563EB;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid #BFDBFE;
+        }
+
+        /* ---------------- [레이아웃 및 카드] ---------------- */
+        .wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            flex: 1;
+        }
+
         .gold-border-card {
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 3px;
+            padding: 2px;
             background-image: var(--gold-frame);
             box-shadow: var(--metallic-shadow);
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .card-inner {
             background: var(--card-bg);
-            border-radius: 17px;
-            padding: 28px 24px;
+            border-radius: 18px;
+            padding: 24px;
             height: 100%;
-        }
-
-        /* 메인 헤더 */
-        header .card-inner {
-            background: linear-gradient(180deg, #FFFFFF 0%, #F4F9FF 100%);
-        }
-
-        .header-title-wrap {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            flex-direction: column;
         }
 
-        .droplet-icon {
-            width: 28px;
-            height: 28px;
-            fill: var(--sky-blue);
-            flex-shrink: 0;
+        .hero-card .card-inner {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.9) 100%);
+            padding: 36px 32px;
         }
 
         h1 {
-            font-size: 1.35rem;
+            font-size: 1.7rem;
             color: var(--text-main);
-            font-weight: 700;
+            font-weight: 800;
+            margin-bottom: 12px;
             line-height: 1.3;
         }
 
-        /* 카드별 소제목 및 줄글 스타일링 */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 868px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
         .section-heading {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -116,7 +483,7 @@
             content: "";
             display: inline-block;
             width: 4px;
-            height: 16px;
+            height: 18px;
             background-color: var(--sky-blue);
             border-radius: 2px;
         }
@@ -132,7 +499,7 @@
             margin-bottom: 0;
         }
 
-        /* 컨트롤 버튼 그룹 */
+        /* ---------------- [버튼 & 컨트롤] ---------------- */
         .btn-group {
             display: flex;
             gap: 12px;
@@ -148,11 +515,9 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
-            min-height: 52px;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
+            min-height: 50px;
+            position: relative;
+            z-index: 20;
         }
 
         .btn-start {
@@ -170,7 +535,7 @@
         }
 
         .btn-stop:enabled {
-            background-color: #FF7676;
+            background-color: #EF4444;
             color: #FFFFFF;
         }
 
@@ -179,12 +544,12 @@
             cursor: not-allowed;
         }
 
-        /* 웹캠 고정 프레임 */
+        /* ---------------- [웹캠 & 실시간 예측] ---------------- */
         .webcam-wrapper {
             position: relative;
             width: 100%;
-            height: 280px;
-            background-color: #F8FAFC;
+            height: 300px;
+            background-color: #F1F5F9;
             border-radius: 14px;
             overflow: hidden;
             display: flex;
@@ -206,22 +571,20 @@
             font-size: 0.9rem;
             text-align: center;
             padding: 20px;
-            line-height: 1.5;
         }
 
-        /* 상태 안내 및 에러 메시지 */
         .status-message {
             font-size: 0.85rem;
             text-align: center;
             margin-bottom: 12px;
-            color: var(--sky-blue-hover);
+            color: #2563EB;
             font-weight: 600;
             min-height: 20px;
         }
 
         .error-message {
-            background-color: #FFEDED;
-            color: #E53E3E;
+            background-color: #FEF2F2;
+            color: #DC2626;
             padding: 12px;
             border-radius: 10px;
             font-size: 0.85rem;
@@ -230,10 +593,9 @@
             word-break: keep-all;
         }
 
-        /* 최우선 예측 강조 박스 */
         .top-prediction-box {
             background-color: var(--sky-blue-light);
-            padding: 18px;
+            padding: 20px;
             border-radius: 14px;
             text-align: center;
             margin-bottom: 20px;
@@ -241,13 +603,13 @@
         }
 
         .top-prediction-title {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-sub);
             margin-bottom: 4px;
         }
 
         .top-prediction-value {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             font-weight: 800;
             color: var(--text-main);
         }
@@ -258,7 +620,6 @@
             margin-top: 6px;
         }
 
-        /* 게이지 바 목록 */
         .label-container {
             display: flex;
             flex-direction: column;
@@ -294,12 +655,29 @@
             border-radius: 7px;
         }
 
-        /* 푸터 */
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .info-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         footer {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 20px 24px;
             text-align: center;
-            padding: 16px 12px;
             font-size: 0.85rem;
             color: var(--text-sub);
+            position: relative;
+            z-index: 10;
         }
 
         .team-info {
@@ -311,286 +689,544 @@
 </head>
 <body>
 
-    <!-- 배경 물방울 장식 -->
-    <div class="droplet-bg"></div>
+    <!-- 화면 비행 및 유리 깨짐 오버레이 -->
+    <div class="impact-overlay" id="impact-overlay">
+        <!-- 거대 해 오브젝트 -->
+        <div class="flying-object" id="flying-sun">
+            <svg width="120" height="120" viewBox="0 0 100 100">
+                <g fill="#F59E0B">
+                    <circle cx="50" cy="12" r="5" />
+                    <circle cx="50" cy="88" r="5" />
+                    <circle cx="12" cy="50" r="5" />
+                    <circle cx="88" cy="50" r="5" />
+                    <circle cx="23" cy="23" r="5" />
+                    <circle cx="77" cy="77" r="5" />
+                    <circle cx="23" cy="77" r="5" />
+                    <circle cx="77" cy="23" r="5" />
+                </g>
+                <circle cx="50" cy="50" r="30" fill="#FBBF24" stroke="#F59E0B" stroke-width="3"/>
+                <circle cx="40" cy="43" r="3.5" fill="#78350F" />
+                <circle cx="60" cy="43" r="3.5" fill="#78350F" />
+                <path d="M 38 55 Q 50 68 62 55" fill="none" stroke="#78350F" stroke-width="3.5" stroke-linecap="round"/>
+            </svg>
+        </div>
 
-    <div class="container">
-        <!-- 1. 프로젝트 타이틀 및 개요 문단 -->
-        <header class="gold-border-card">
+        <!-- 거대 우산 오브젝트 -->
+        <div class="flying-object" id="flying-umbrella">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="#2563EB">
+                <path d="M12 2A10 10 0 0 0 2 12a1 1 0 0 0 1 1h8v7a2 2 0 0 0 4 0v-1a1 1 0 0 0-2 0v1a1 1 0 0 1-2 0v-7h8a1 1 0 0 0 1-1A10 10 0 0 0 12 2z"/>
+            </svg>
+        </div>
+    </div>
+
+    <canvas class="shatter-canvas" id="shatter-canvas"></canvas>
+
+    <!-- 위험 개인정보 동의 모달 -->
+    <div class="modal-overlay" id="consent-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>🚨 [경고] 시스템 접근 보안 요구 동의</h2>
+            </div>
+            <div class="modal-body">
+                <p style="color: #EF4444; font-weight: 700; margin-bottom: 8px;">⚠️ 본 시스템 사용 시 사용자의 전체 데이터 접근 권한이 요청됩니다.</p>
+                <p>본 실시간 AI 창밖 날씨 판별 서비스를 이용하기 위해 아래 항목의 수집 및 활용에 동의하셔야 합니다.</p>
+                <ul>
+                    <li><strong>수집 항목:</strong> 실시간 위치, 카메라 영상 데이터, 사용자의 시선 처리, 금일 기분 상태, 좋아하는 최애 아이돌, 보유 주식 종목, 점심 메뉴 선호도, 잠재적 우산 소지 여부</li>
+                    <li><strong>수집 목적:</strong> 창밖 날씨를 0.001%의 오차 없이 분석하기 위함 및 우산 대여 서비스 알림 제공</li>
+                    <li><strong>보유 기간:</strong> 인류가 지형을 완전히 정복할 때까지</li>
+                </ul>
+                <p style="font-size: 0.78rem; color: #94A3B8;">* 거부 시 시스템 사용이 즉시 차단되며 AI 구동이 불가합니다.</p>
+            </div>
+            <label class="consent-checkbox">
+                <input type="checkbox" id="consent-check">
+                <span>위 모든 개인정보의 무제한 수집 및 제공에 위험을 무릅쓰고 동의합니다.</span>
+            </label>
+            <button class="modal-btn" onclick="acceptConsent()">위험 감수하고 AI 서비스 입장하기 🚀</button>
+        </div>
+    </div>
+
+    <canvas id="rain-canvas"></canvas>
+
+    <!-- 웃는 해 -->
+    <div class="sun-container" id="sun-container">
+        <svg class="sun-icon" viewBox="0 0 100 100">
+            <g fill="#F59E0B">
+                <circle cx="50" cy="12" r="5" />
+                <circle cx="50" cy="88" r="5" />
+                <circle cx="12" cy="50" r="5" />
+                <circle cx="88" cy="50" r="5" />
+                <circle cx="23" cy="23" r="5" />
+                <circle cx="77" cy="77" r="5" />
+                <circle cx="23" cy="77" r="5" />
+                <circle cx="77" cy="23" r="5" />
+            </g>
+            <circle cx="50" cy="50" r="30" fill="#FBBF24" stroke="#F59E0B" stroke-width="3"/>
+            <circle cx="40" cy="43" r="3.5" fill="#78350F" />
+            <circle cx="60" cy="43" r="3.5" fill="#78350F" />
+            <path d="M 38 55 Q 50 68 62 55" fill="none" stroke="#78350F" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="34" cy="50" r="4" fill="#F43F5E" opacity="0.5"/>
+            <circle cx="66" cy="50" r="4" fill="#F43F5E" opacity="0.5"/>
+        </svg>
+        <span class="sun-tooltip">드래그하거나 클릭해보세요! 🎆</span>
+    </div>
+
+    <!-- 우산 위젯 -->
+    <div class="umbrella-widget" id="umbrella-widget">
+        <div class="umbrella-icon" id="umbrella-icon">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2A10 10 0 0 0 2 12a1 1 0 0 0 1 1h8v7a2 2 0 0 0 4 0v-1a1 1 0 0 0-2 0v1a1 1 0 0 1-2 0v-7h8a1 1 0 0 0 1-1A10 10 0 0 0 12 2z"/>
+            </svg>
+        </div>
+        <div class="umbrella-counter" id="umbrella-counter">흡수한 물방울: 0 / 10</div>
+        <button class="reset-btn" id="reset-btn" onclick="resetRain()" title="비 다시 내리게 하기">💧</button>
+    </div>
+
+    <!-- 오디오 컨트롤 -->
+    <div class="audio-controls">
+        <span>🌧️ 빗소리</span>
+        <button class="audio-btn" id="audio-toggle" onclick="toggleAudio()">재생</button>
+    </div>
+
+    <!-- 내비게이션 바 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span id="nav-title">학교 안의 작은 문제를 AI로 탐구하다</span>
+            </div>
+            <span class="nav-badge">팀 콩나물국</span>
+        </div>
+    </nav>
+
+    <div class="wrapper">
+        <header class="gold-border-card hero-card">
             <div class="card-inner">
-                <div class="header-title-wrap">
-                    <svg class="droplet-icon" viewBox="0 0 24 24">
-                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                    </svg>
-                    <h1>학교 안의 작은 문제를 AI로 탐구하다</h1>
-                </div>
+                <h1 id="hero-title">창밖 날씨 실시간 AI 판별 프로젝트</h1>
                 <p class="prose-paragraph">
-                    학교생활을 하다 보면 쉬는 시간이나 하교 직전에 창밖 날씨가 궁금해지는 순간이 많습니다. 우리는 복도 끝이나 교실 바깥으로 직접 나가지 않고도 창가의 상황을 인공지능으로 미리 파악할 수 있는 방안을 고민하게 되었습니다.
-                </p>
-                <p class="prose-paragraph">
-                    이 프로젝트는 고등학생들의 일상 속 소소한 궁금증과 불편을 해소하기 위해 시작되었습니다. 창가 풍경 이미지를 인공지능에 학습시켜, 학생들이 실시간으로 날씨 상태를 확인할 수 있는 간결하고 유용한 웹 체험 공간을 제공합니다.
+                    학교생활 중 쉬는 시간이나 하교 직전, 복도로 나가지 않고도 창밖 날씨를 실시간으로 확인하기 위해 개발된 인공지능 탐구 서비스입니다.
                 </p>
             </div>
         </header>
 
-        <!-- 2. 해결하려는 문제 문단 -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">해결하려는 문제</h2>
-                <p class="prose-paragraph">
-                    수업이 끝나거나 다음 교시를 준비할 때, 밖에 비가 내리고 있는지 확인하기 위해 매번 멀리 떨어진 창문이나 복도로 이동하는 것은 다소 번거로운 일입니다. 특히 이동 수업이나 급식실 이동 전 날씨를 미리 파악하지 못해 당황하는 경우가 자주 발생하곤 합니다.
-                </p>
-                <p class="prose-paragraph">
-                    우리는 이러한 문제를 해결하기 위해 창밖을 향한 카메라 입력만으로 현재 날씨 상태를 분류해 내는 인공지능 탐구 모델을 기획했습니다.
-                </p>
-            </div>
-        </section>
+        <main class="main-layout">
+            <div class="left-column">
+                <section class="gold-border-card">
+                    <div class="card-inner">
+                        <h2 class="section-heading">실시간 AI 모델 체험하기</h2>
+                        
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-start" id="start-btn" onclick="init()">카메라 시작</button>
+                            <button type="button" class="btn btn-stop" id="stop-btn" onclick="stopWebcam()" disabled>중지</button>
+                        </div>
 
-        <!-- 3. 주요 사용자 문단 -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">주요 사용자</h2>
-                <p class="prose-paragraph">
-                    본 웹 서비스의 핵심 사용자는 교실 안에서 빽빽한 일정을 보내는 고등학생들입니다. 쉬는 시간이나 점심시간, 그리고 하교 직전 교실을 나서기 전 빠르게 날씨 변화를 파악하고자 하는 학생들에게 가장 최적화되어 있습니다.
-                </p>
-                <p class="prose-paragraph">
-                    스마트폰을 이용해 언제 어디서나 손쉽게 접속하여 직관적인 분석 결과를 얻을 수 있도록 사용자 환경을 구성하였습니다.
-                </p>
-            </div>
-        </section>
+                        <div class="status-message" id="status-msg"></div>
+                        <div class="error-message" id="error-msg"></div>
 
-        <!-- 4. 모델이 구분하는 실제 클래스 문단 -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">모델이 구분하는 클래스</h2>
-                <p class="prose-paragraph">
-                    저희가 구축한 티처블 머신 이미지 분류 모델은 창밖 풍경 데이터를 학습하여 현재 상태를 정확히 두 가지 클래스로 구분합니다.
-                </p>
-                <p class="prose-paragraph">
-                    분류 기준이 되는 실제 클래스는 <strong>비</strong>와 <strong>맑음</strong>입니다. 실시간으로 입력되는 카메라 영상 분석을 거쳐 각 클래스에 해당할 확률을 백분율로 계산해냅니다.
-                </p>
-            </div>
-        </section>
+                        <div class="webcam-wrapper">
+                            <div class="webcam-placeholder" id="placeholder-text">
+                                '카메라 시작' 버튼을 누르면 실시간 분석이 시작됩니다.
+                            </div>
+                            <div id="webcam-container"></div>
+                        </div>
 
-        <!-- 5. AI 실시간 체험 영역 (중심 기능) -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">실시간 AI 모델 체험하기</h2>
-                
-                <!-- 시작 / 중지 버튼 -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-start" id="start-btn" onclick="init()">카메라 시작</button>
-                    <button type="button" class="btn btn-stop" id="stop-btn" onclick="stopWebcam()" disabled>중지</button>
-                </div>
+                        <div class="top-prediction-box">
+                            <div class="top-prediction-title">현재 감지된 날씨</div>
+                            <div class="top-prediction-value" id="top-prediction">-</div>
+                            <div class="disclaimer-text">* 가장 높은 확률의 예측 결과이며, 판별 완료 시 수치가 고정됩니다.</div>
+                        </div>
 
-                <!-- 상태 및 에러 안내 -->
-                <div class="status-message" id="status-msg"></div>
-                <div class="error-message" id="error-msg"></div>
-
-                <!-- 웹캠 화면 출력 -->
-                <div class="webcam-wrapper">
-                    <div class="webcam-placeholder" id="placeholder-text">
-                        '카메라 시작' 버튼을 누르면 실시간 창밖 날씨 분석이 시작됩니다.
+                        <div class="label-container" id="label-container"></div>
                     </div>
-                    <div id="webcam-container"></div>
+                </section>
+            </div>
+
+            <div class="right-column">
+                <div class="info-cards-grid">
+                    <section class="gold-border-card">
+                        <div class="card-inner">
+                            <h2 class="section-heading">해결하려는 문제</h2>
+                            <p class="prose-paragraph">
+                                날씨 확인을 위해 매번 창문이나 복도로 이동하는 번거로움을 카메라 영상 분류로 해결합니다.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="gold-border-card">
+                        <div class="card-inner">
+                            <h2 class="section-heading">주요 사용자</h2>
+                            <p class="prose-paragraph">
+                                쉬는 시간이나 하교 전 교실 안에서 빠르게 날씨 변화를 파악하려는 고등학생입니다.
+                            </p>
+                        </div>
+                    </section>
                 </div>
 
-                <!-- 최우선 예측 결과 하이라이트 -->
-                <div class="top-prediction-box">
-                    <div class="top-prediction-title">현재 감지된 날씨</div>
-                    <div class="top-prediction-value" id="top-prediction">-</div>
-                    <div class="disclaimer-text">* 가장 높은 확률의 예측 결과이며, 실제 날씨와 차이가 있을 수 있습니다.</div>
-                </div>
+                <section class="gold-border-card">
+                    <div class="card-inner">
+                        <h2 class="section-heading">모델 구분 클래스</h2>
+                        <p class="prose-paragraph">
+                            창밖 풍경을 실시간 분석하여 두 가지 상태로 분류합니다.
+                        </p>
+                        <p class="prose-paragraph">
+                            실제 메타데이터 기준 클래스는 <strong>비</strong>와 <strong>맑음</strong>이며, 인공지능이 각각의 확률을 백분율로 계산합니다.
+                        </p>
+                    </div>
+                </section>
 
-                <!-- 전체 클래스 확률 프로그레스 바 -->
-                <div class="label-container" id="label-container"></div>
+                <section class="gold-border-card">
+                    <div class="card-inner">
+                        <h2 class="section-heading">모델 한계와 사람의 역할</h2>
+                        <p class="prose-paragraph">
+                            수집된 학습 데이터 특성상 <strong>맑음</strong>으로 판단하는 경향이 더 높습니다.
+                        </p>
+                        <p class="prose-paragraph">
+                            정확한 판별을 위해 예측 결과와 함께 실제 <strong>빗소리가 나는지</strong> 직접 귀로 들어 확인해 주세요.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="gold-border-card">
+                    <div class="card-inner">
+                        <h2 class="section-heading">탐구 팀 소개</h2>
+                        <p class="prose-paragraph">
+                            학교 안의 작은 문제를 직접 탐구하고 AI 해결책을 제시합니다.
+                        </p>
+                        <p class="prose-paragraph">
+                            팀명: <strong>콩나물국</strong> | 팀원: <strong>강서윤</strong>, <strong>김나연</strong>
+                        </p>
+                    </div>
+                </section>
             </div>
-        </section>
-
-        <!-- 6. 모델의 한계 및 사람이 확인해야 할 부분 문단 -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">모델의 한계와 사람의 역할</h2>
-                <p class="prose-paragraph">
-                    인공지능 모델이 모든 상황을 완벽하게 판별하는 것은 아닙니다. 데이터 수집 환경의 특성상 현재 모델은 <strong>맑음</strong>으로 판단하는 경향이 상대적으로 더 높게 나타나는 한계점을 가지고 있습니다.
-                </p>
-                <p class="prose-paragraph">
-                    따라서 화면에 나타나는 인공지능의 예측 결과만을 과신하기보다는, 보다 확실한 판단을 위해 창밖에서 <strong>빗소리가 나고 있지는 않은지</strong> 직접 귀로 소리를 들어 확인해보는 교차 검증 과정이 반드시 필요합니다.
-                </p>
-            </div>
-        </section>
-
-        <!-- 7. 팀명 및 팀원 문단 -->
-        <section class="gold-border-card">
-            <div class="card-inner">
-                <h2 class="section-heading">탐구 팀 소개</h2>
-                <p class="prose-paragraph">
-                    이 프로젝트는 인공지능을 활용해 학교생활의 작지만 실질적인 문제를 스스로 찾아내고 해결하고자 결정된 팀 프로젝트입니다.
-                </p>
-                <p class="prose-paragraph">
-                    팀명은 <strong>콩나물국</strong>이며, 팀원 <strong>강서윤</strong>, <strong>김나연</strong> 학생이 수집한 데이터와 모델링을 바탕으로 제작되었습니다.
-                </p>
-            </div>
-        </section>
-
-        <!-- 푸터 -->
-        <footer>
-            <p class="team-info">팀 콩나물국 (강서윤, 김나연)</p>
-            <p>© 2026 School AI Project. All rights reserved.</p>
-        </footer>
+        </main>
     </div>
 
-    <script>
-        // Teachable Machine 모델 공유 URL
-        const URL = "https://teachablemachine.withgoogle.com/models/XilyKlHnOM/";
+    <footer>
+        <p class="team-info">팀 콩나물국 (강서윤, 김나연)</p>
+        <p>© 2026 School AI Exploration Project. All rights reserved.</p>
+    </footer>
 
+    <script>
+        // ---------------- [모달 동의] ----------------
+        function acceptConsent() {
+            const check = document.getElementById('consent-check');
+            if (!check.checked) {
+                alert('위험을 무릅쓰고 동의해 주세요! 😉');
+                return;
+            }
+            const modal = document.getElementById('consent-modal');
+            modal.style.opacity = '0';
+            modal.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
+        }
+
+        // ---------------- [유리 깨짐 효과 캔버스] ----------------
+        const shatterCanvas = document.getElementById('shatter-canvas');
+        const sCtx = shatterCanvas.getContext('2d');
+
+        function resizeShatterCanvas() {
+            shatterCanvas.width = window.innerWidth;
+            shatterCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeShatterCanvas);
+        resizeShatterCanvas();
+
+        let glassShards = [];
+
+        function GlassShard(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 25 + 10;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 15 + 5;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.rot = Math.random() * Math.PI * 2;
+            this.vRot = (Math.random() - 0.5) * 0.3;
+            this.alpha = 1;
+        }
+
+        GlassShard.prototype.update = function() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.3; 
+            this.rot += this.vRot;
+            this.alpha -= 0.02;
+        };
+
+        GlassShard.prototype.draw = function() {
+            sCtx.save();
+            sCtx.translate(this.x, this.y);
+            sCtx.rotate(this.rot);
+            sCtx.globalAlpha = Math.max(0, this.alpha);
+            sCtx.fillStyle = "rgba(224, 242, 254, 0.7)";
+            sCtx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+            sCtx.lineWidth = 1.5;
+
+            sCtx.beginPath();
+            sCtx.moveTo(0, -this.size / 2);
+            sCtx.lineTo(this.size / 2, this.size / 2);
+            sCtx.lineTo(-this.size / 2, this.size / 3);
+            sCtx.closePath();
+            sCtx.fill();
+            sCtx.stroke();
+            sCtx.restore();
+        };
+
+        function triggerGlassShatter() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            for (let i = 0; i < 70; i++) {
+                glassShards.push(new GlassShard(centerX, centerY));
+            }
+
+            document.body.classList.add('screen-shake');
+            setTimeout(() => {
+                document.body.classList.remove('screen-shake');
+            }, 400);
+        }
+
+        function renderShatter() {
+            sCtx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
+            for (let i = glassShards.length - 1; i >= 0; i--) {
+                const shard = glassShards[i];
+                shard.update();
+                shard.draw();
+                if (shard.alpha <= 0) {
+                    glassShards.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(renderShatter);
+        }
+        renderShatter();
+
+        // ---------------- [날아오는 임팩트 애니메이션 (50% 기준)] ----------------
+        let lastTriggeredWeather = null;
+
+        function triggerImpactEffect(weatherType) {
+            if (lastTriggeredWeather === weatherType) return;
+            lastTriggeredWeather = weatherType;
+
+            const sunObj = document.getElementById('flying-sun');
+            const umbrellaObj = document.getElementById('flying-umbrella');
+
+            const targetObj = (weatherType === 'sunny') ? sunObj : umbrellaObj;
+
+            targetObj.classList.remove('fly-in');
+            void targetObj.offsetWidth; // Reflow
+            targetObj.classList.add('fly-in');
+
+            // 0.5초 뒤 화면에 충돌하면서 유리 깨짐 발생
+            setTimeout(() => {
+                triggerGlassShatter();
+                setTimeout(() => {
+                    targetObj.classList.remove('fly-in');
+                }, 400);
+            }, 500);
+        }
+
+        // ---------------- [비 효과 & 드래그 인터랙션] ----------------
+        const rainCanvas = document.getElementById('rain-canvas');
+        const ctx = rainCanvas.getContext('2d');
+        let drops = [];
+        let isRaining = false;
+
+        function resizeRainCanvas() {
+            rainCanvas.width = window.innerWidth;
+            rainCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeRainCanvas);
+        resizeRainCanvas();
+
+        function RainDrop() {
+            this.x = Math.random() * rainCanvas.width;
+            this.y = Math.random() * -rainCanvas.height;
+            this.speed = Math.random() * 8 + 12;
+            this.length = Math.random() * 20 + 10;
+        }
+
+        function initRain() {
+            drops = [];
+            for (let i = 0; i < 120; i++) {
+                drops.push(new RainDrop());
+            }
+        }
+
+        function drawRain() {
+            ctx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+            if (!isRaining) return;
+
+            ctx.strokeStyle = 'rgba(147, 197, 253, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            for (let i = 0; i < drops.length; i++) {
+                const d = drops[i];
+                ctx.beginPath();
+                ctx.moveTo(d.x, d.y);
+                ctx.lineTo(d.x, d.y + d.length);
+                ctx.stroke();
+
+                d.y += d.speed;
+                if (d.y > rainCanvas.height) {
+                    d.y = -d.length;
+                    d.x = Math.random() * rainCanvas.width;
+                }
+            }
+            requestAnimationFrame(drawRain);
+        }
+
+        // ---------------- [Teachable Machine AI 로직] ----------------
+        const URL = "https://teachablemachine.withgoogle.com/models/bT4i3LwD3/"; 
         let model, webcam, labelContainer, maxPredictions;
         let isRunning = false;
-        let animationFrameId = null;
 
-        // 카메라 및 모델 초기화/시작
         async function init() {
-            if (isRunning) return;
-
-            const startBtn = document.getElementById("start-btn");
-            const stopBtn = document.getElementById("stop-btn");
-            const statusMsg = document.getElementById("status-msg");
-            const errorMsg = document.getElementById("error-msg");
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const statusMsg = document.getElementById('status-msg');
+            const errorMsg = document.getElementById('error-msg');
+            const placeholder = document.getElementById('placeholder-text');
 
             startBtn.disabled = true;
+            statusMsg.innerText = "AI 모델 및 카메라인식 로딩 중...";
             errorMsg.style.display = "none";
-            statusMsg.innerText = "모델 파일 및 카메라를 불러오는 중입니다...";
-
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
 
             try {
-                // 1. 모델과 메타데이터 로드
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
+
                 model = await tmImage.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
 
-                // 2. 웹캠 생성 및 설정 (200x200 규격)
-                const flip = true; 
-                webcam = new tmImage.Webcam(200, 200, flip); 
-                
-                await webcam.setup(); 
+                const flip = true;
+                webcam = new tmImage.Webcam(300, 300, flip);
+                await webcam.setup();
                 await webcam.play();
-                
+
                 isRunning = true;
-                stopBtn.disabled = false;
-                statusMsg.innerText = "실시간 분석 진행 중...";
-                document.getElementById("placeholder-text").style.display = "none";
+                window.requestAnimationFrame(loop);
 
-                // 웹캠 캔버스 출력
-                const webcamContainer = document.getElementById("webcam-container");
-                webcamContainer.innerHTML = "";
-                webcamContainer.appendChild(webcam.canvas);
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+                placeholder.style.display = "none";
 
-                // 메타데이터의 실시간 예측 게이지 바 구조 생성
                 labelContainer = document.getElementById("label-container");
-                labelContainer.innerHTML = ""; 
+                labelContainer.innerHTML = "";
                 for (let i = 0; i < maxPredictions; i++) {
-                    const className = model.getClassLabels()[i];
-                    
                     const barItem = document.createElement("div");
                     barItem.className = "bar-item";
                     barItem.innerHTML = `
                         <div class="bar-info">
-                            <span>${className}</span>
-                            <span id="percent-${i}">0%</span>
+                            <span class="bar-name">클래스</span>
+                            <span class="bar-val">0%</span>
                         </div>
                         <div class="bar-track">
-                            <div class="bar-fill" id="fill-${i}"></div>
+                            <div class="bar-fill"></div>
                         </div>
                     `;
                     labelContainer.appendChild(barItem);
                 }
 
-                // 예측 애니메이션 프레임 루프 실행
-                window.requestAnimationFrame(loop);
-
-            } catch (error) {
-                console.error(error);
-                statusMsg.innerText = "";
+                stopBtn.disabled = false;
+                statusMsg.innerText = "실시간 감지 작동 중";
+            } catch (err) {
+                errorMsg.innerText = "카메라를 켤 수 없거나 모델을 로드하는 중 오류가 발생했습니다: " + err.message;
                 errorMsg.style.display = "block";
-                
-                if (error.name === "NotAllowedError" || error.message.includes("permission")) {
-                    errorMsg.innerText = "카메라 사용 권한이 거부되었습니다. 브라우저 설정에서 카메라 사용을 허용해 주세요.";
-                } else if (error.name === "NotFoundError" || error.message.includes("DevicesNotFoundError")) {
-                    errorMsg.innerText = "연결된 카메라 장치를 찾을 수 없습니다.";
-                } else {
-                    errorMsg.innerText = "모델을 불러오지 못했거나 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-                }
-
+                statusMsg.innerText = "";
                 startBtn.disabled = false;
-                stopBtn.disabled = true;
-                isRunning = false;
             }
         }
 
-        // 반복 프레임 수행
         async function loop() {
-            if (!isRunning) return;
-            webcam.update(); 
-            await predict();
-            animationFrameId = window.requestAnimationFrame(loop);
+            if (isRunning) {
+                webcam.update();
+                await predict();
+                window.requestAnimationFrame(loop);
+            }
         }
 
-        // 실시간 예측 동작
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
-            
-            let highestProb = -1;
-            let highestClass = "";
+            let topClass = "";
+            let maxProb = -1;
+
+            let rainProb = 0;
+            let sunnyProb = 0;
 
             for (let i = 0; i < maxPredictions; i++) {
                 const className = prediction[i].className;
                 const probability = prediction[i].probability;
-                const percentage = Math.round(probability * 100);
 
-                const fillElement = document.getElementById(`fill-${i}`);
-                const percentElement = document.getElementById(`percent-${i}`);
-
-                if (fillElement && percentElement) {
-                    fillElement.style.width = percentage + "%";
-                    percentElement.innerText = percentage + "%";
+                if (probability > maxProb) {
+                    maxProb = probability;
+                    topClass = className;
                 }
 
-                if (probability > highestProb) {
-                    highestProb = probability;
-                    highestClass = className;
+                if (className.includes("비")) rainProb = probability;
+                if (className.includes("맑음")) sunnyProb = probability;
+
+                const percent = (probability * 100).toFixed(1) + "%";
+                const barItem = labelContainer.childNodes[i];
+                if (barItem) {
+                    barItem.querySelector(".bar-name").innerText = className;
+                    barItem.querySelector(".bar-val").innerText = percent;
+                    barItem.querySelector(".bar-fill").style.width = percent;
                 }
             }
 
-            const topPredictionElement = document.getElementById("top-prediction");
-            if (topPredictionElement) {
-                topPredictionElement.innerText = `${highestClass} (${Math.round(highestProb * 100)}%)`;
+            document.getElementById("top-prediction").innerText = `${topClass} (${(maxProb * 100).toFixed(1)}%)`;
+
+            const sunContainer = document.getElementById("sun-container");
+
+            // 50% (0.5) 이상일 때 테마 변경 및 거대 아이콘 비행 애니메이션 실행
+            if (rainProb >= 0.50) {
+                document.body.classList.remove("sunny-theme");
+                sunContainer.classList.remove("show");
+                isRaining = true;
+                drawRain();
+                triggerImpactEffect("rain");
+            } else if (sunnyProb >= 0.50) {
+                document.body.classList.add("sunny-theme");
+                sunContainer.classList.add("show");
+                isRaining = false;
+                triggerImpactEffect("sunny");
             }
         }
 
-        // 웹캠 동작 및 예측 루프 완전 중지
         function stopWebcam() {
-            if (!isRunning) return;
-
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-
             if (webcam) {
                 webcam.stop();
             }
-
             isRunning = false;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            document.getElementById('status-msg').innerText = "카메라가 중지되었습니다.";
+        }
 
-            document.getElementById("start-btn").disabled = false;
-            document.getElementById("stop-btn").disabled = true;
-            document.getElementById("status-msg").innerText = "카메라 작동이 중지되었습니다.";
-            document.getElementById("placeholder-text").style.display = "block";
-            
-            const webcamContainer = document.getElementById("webcam-container");
-            webcamContainer.innerHTML = "";
+        // ---------------- [오디오 핸들러] ----------------
+        let audioCtx;
+        let isPlayingAudio = false;
 
-            document.getElementById("top-prediction").innerText = "-";
+        function toggleAudio() {
+            const btn = document.getElementById('audio-toggle');
+            if (!isPlayingAudio) {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                isPlayingAudio = true;
+                btn.innerText = "일시정지";
+            } else {
+                isPlayingAudio = false;
+                btn.innerText = "재생";
+            }
+        }
+
+        function resetRain() {
+            isRaining = true;
+            initRain();
+            drawRain();
         }
     </script>
 </body>
