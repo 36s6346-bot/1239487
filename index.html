@@ -33,20 +33,6 @@
             --text-sub: #78350F;
         }
 
-        /* 화면 흔들림(진동) 애니메이션 */
-        @keyframes shake {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(-15px, 10px) rotate(-2deg); }
-            40% { transform: translate(15px, -10px) rotate(2deg); }
-            60% { transform: translate(-10px, -5px) rotate(-1deg); }
-            80% { transform: translate(10px, 5px) rotate(1deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        body.screen-shake {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -66,53 +52,16 @@
             transition: var(--transition-theme);
         }
 
-        /* ---------------- [화면 날아오기 & 깨짐 효과 레이어] ---------------- */
-        .impact-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .flying-object {
-            position: absolute;
-            opacity: 0;
-            transform: scale(0.01) rotate(0deg);
-            transition: transform 0.6s cubic-bezier(0.11, 0, 0.5, 0), opacity 0.2s ease;
-        }
-
-        .flying-object.fly-in {
-            opacity: 1;
-            transform: scale(10) rotate(360deg);
-        }
-
-        .shatter-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* ---------------- [개인정보 동의 모달] ---------------- */
+        /* ---------------- [장난 개인정보 동의 모달] ---------------- */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(10, 0, 0, 0.88);
-            backdrop-filter: blur(12px);
-            z-index: 1001;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -120,56 +69,46 @@
         }
 
         .modal-card {
-            background: #0F172A;
+            background: #FFFFFF;
             border-radius: 20px;
             max-width: 520px;
             width: 100%;
             padding: 28px;
-            box-shadow: 0 0 35px rgba(220, 38, 38, 0.5);
-            border: 2px solid #EF4444;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 2px solid #E2E8F0;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            animation: pulseDanger 2s infinite alternate;
-        }
-
-        @keyframes pulseDanger {
-            0% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
-            100% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.8); }
         }
 
         .modal-header {
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 2px solid #334155;
+            border-bottom: 2px solid #F1F5F9;
             padding-bottom: 12px;
         }
 
         .modal-header h2 {
             font-size: 1.25rem;
-            color: #F87171;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            color: #0F172A;
         }
 
         .modal-body {
             font-size: 0.88rem;
-            color: #E2E8F0;
+            color: #334155;
             max-height: 280px;
             overflow-y: auto;
-            background: #1E293B;
+            background: #F8FAFC;
             padding: 16px;
             border-radius: 12px;
-            border: 1px solid #475569;
+            border: 1px solid #E2E8F0;
         }
 
         .modal-body ul {
             margin-left: 20px;
             margin-top: 8px;
             margin-bottom: 12px;
-            color: #FCA5A5;
         }
 
         .modal-body li {
@@ -182,7 +121,6 @@
             gap: 10px;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #F87171;
             cursor: pointer;
             margin-top: 4px;
         }
@@ -191,11 +129,10 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
-            accent-color: #EF4444;
         }
 
         .modal-btn {
-            background-color: #DC2626;
+            background-color: #2563EB;
             color: white;
             border: none;
             padding: 14px;
@@ -203,26 +140,25 @@
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+            transition: background 0.2s;
         }
 
         .modal-btn:hover {
-            background-color: #B91C1C;
-            transform: scale(1.02);
+            background-color: #1D4ED8;
         }
 
-        /* ---------------- [인터랙티브 캔버스 & 요소] ---------------- */
+        /* ---------------- [인터랙티브 캔버스] ---------------- */
         #rain-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 30;
-            pointer-events: none;
+            z-index: 30; /* 텍스트 박스 위로 불꽃놀이가 연출되도록 z-index 상향 조정 */
+            pointer-events: none; /* 클릭 통과 유지 */
         }
 
+        /* ---------------- [웃는 해 아이콘 (드래그 가능)] ---------------- */
         .sun-container {
             position: fixed;
             top: 70px;
@@ -235,6 +171,10 @@
             flex-direction: column;
             align-items: center;
             user-select: none;
+        }
+
+        .sun-container:active {
+            cursor: grabbing;
         }
 
         .sun-container.show {
@@ -267,6 +207,7 @@
             pointer-events: none;
         }
 
+        /* ---------------- [드래그 가능한 우산 아이콘 및 오디오 오버레이] ---------------- */
         .umbrella-widget {
             position: fixed;
             bottom: 30px;
@@ -689,65 +630,33 @@
 </head>
 <body>
 
-    <!-- 화면 비행 및 유리 깨짐 오버레이 -->
-    <div class="impact-overlay" id="impact-overlay">
-        <!-- 거대 해 오브젝트 -->
-        <div class="flying-object" id="flying-sun">
-            <svg width="120" height="120" viewBox="0 0 100 100">
-                <g fill="#F59E0B">
-                    <circle cx="50" cy="12" r="5" />
-                    <circle cx="50" cy="88" r="5" />
-                    <circle cx="12" cy="50" r="5" />
-                    <circle cx="88" cy="50" r="5" />
-                    <circle cx="23" cy="23" r="5" />
-                    <circle cx="77" cy="77" r="5" />
-                    <circle cx="23" cy="77" r="5" />
-                    <circle cx="77" cy="23" r="5" />
-                </g>
-                <circle cx="50" cy="50" r="30" fill="#FBBF24" stroke="#F59E0B" stroke-width="3"/>
-                <circle cx="40" cy="43" r="3.5" fill="#78350F" />
-                <circle cx="60" cy="43" r="3.5" fill="#78350F" />
-                <path d="M 38 55 Q 50 68 62 55" fill="none" stroke="#78350F" stroke-width="3.5" stroke-linecap="round"/>
-            </svg>
-        </div>
-
-        <!-- 거대 우산 오브젝트 -->
-        <div class="flying-object" id="flying-umbrella">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="#2563EB">
-                <path d="M12 2A10 10 0 0 0 2 12a1 1 0 0 0 1 1h8v7a2 2 0 0 0 4 0v-1a1 1 0 0 0-2 0v1a1 1 0 0 1-2 0v-7h8a1 1 0 0 0 1-1A10 10 0 0 0 12 2z"/>
-            </svg>
-        </div>
-    </div>
-
-    <canvas class="shatter-canvas" id="shatter-canvas"></canvas>
-
-    <!-- 위험 개인정보 동의 모달 -->
+    <!-- 장난 개인정보 동의 시작 모달 -->
     <div class="modal-overlay" id="consent-modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>🚨 [경고] 시스템 접근 보안 요구 동의</h2>
+                <h2>⚠️ [필수] 초정밀 서비스 제공을 위한 동의</h2>
             </div>
             <div class="modal-body">
-                <p style="color: #EF4444; font-weight: 700; margin-bottom: 8px;">⚠️ 본 시스템 사용 시 사용자의 전체 데이터 접근 권한이 요청됩니다.</p>
                 <p>본 실시간 AI 창밖 날씨 판별 서비스를 이용하기 위해 아래 항목의 수집 및 활용에 동의하셔야 합니다.</p>
                 <ul>
                     <li><strong>수집 항목:</strong> 실시간 위치, 카메라 영상 데이터, 사용자의 시선 처리, 금일 기분 상태, 좋아하는 최애 아이돌, 보유 주식 종목, 점심 메뉴 선호도, 잠재적 우산 소지 여부</li>
                     <li><strong>수집 목적:</strong> 창밖 날씨를 0.001%의 오차 없이 분석하기 위함 및 우산 대여 서비스 알림 제공</li>
                     <li><strong>보유 기간:</strong> 인류가 지형을 완전히 정복할 때까지</li>
                 </ul>
-                <p style="font-size: 0.78rem; color: #94A3B8;">* 거부 시 시스템 사용이 즉시 차단되며 AI 구동이 불가합니다.</p>
+                <p style="font-size: 0.78rem; color: #64748B;">* 동의를 거부하실 수 있으나, 거부 시 본 AI 서비스를 이용하실 수 없습니다.</p>
             </div>
             <label class="consent-checkbox">
                 <input type="checkbox" id="consent-check">
-                <span>위 모든 개인정보의 무제한 수집 및 제공에 위험을 무릅쓰고 동의합니다.</span>
+                <span>위 모든 개인정보의 무제한 수집에 동의합니다.</span>
             </label>
-            <button class="modal-btn" onclick="acceptConsent()">위험 감수하고 AI 서비스 입장하기 🚀</button>
+            <button class="modal-btn" onclick="acceptConsent()">동의하고 AI 서비스 입장하기 🚀</button>
         </div>
     </div>
 
+    <!-- 물리 효과 및 물방울/불꽃놀이 캔버스 -->
     <canvas id="rain-canvas"></canvas>
 
-    <!-- 웃는 해 -->
+    <!-- 웃는 해 (맑은 날씨에 등장 & 드래그 가능) -->
     <div class="sun-container" id="sun-container">
         <svg class="sun-icon" viewBox="0 0 100 100">
             <g fill="#F59E0B">
@@ -770,7 +679,7 @@
         <span class="sun-tooltip">드래그하거나 클릭해보세요! 🎆</span>
     </div>
 
-    <!-- 우산 위젯 -->
+    <!-- 우산 커서 아이콘 (드래그 가능) -->
     <div class="umbrella-widget" id="umbrella-widget">
         <div class="umbrella-icon" id="umbrella-icon">
             <svg viewBox="0 0 24 24">
@@ -778,10 +687,11 @@
             </svg>
         </div>
         <div class="umbrella-counter" id="umbrella-counter">흡수한 물방울: 0 / 10</div>
+        <!-- 텍스트 없이 물방울 이모지로만 구성된 재설정 버튼 -->
         <button class="reset-btn" id="reset-btn" onclick="resetRain()" title="비 다시 내리게 하기">💧</button>
     </div>
 
-    <!-- 오디오 컨트롤 -->
+    <!-- 배경 빗소리 오디오 컨트롤 -->
     <div class="audio-controls">
         <span>🌧️ 빗소리</span>
         <button class="audio-btn" id="audio-toggle" onclick="toggleAudio()">재생</button>
@@ -834,7 +744,7 @@
                         <div class="top-prediction-box">
                             <div class="top-prediction-title">현재 감지된 날씨</div>
                             <div class="top-prediction-value" id="top-prediction">-</div>
-                            <div class="disclaimer-text">* 가장 높은 확률의 예측 결과이며, 판별 완료 시 수치가 고정됩니다.</div>
+                            <div class="disclaimer-text">* 가장 높은 확률의 예측 결과이며, 실제 날씨와 차이가 있을 수 있습니다.</div>
                         </div>
 
                         <div class="label-container" id="label-container"></div>
@@ -908,11 +818,11 @@
     </footer>
 
     <script>
-        // ---------------- [모달 동의] ----------------
+        // ---------------- [시작 모달 동의 처리] ----------------
         function acceptConsent() {
             const check = document.getElementById('consent-check');
             if (!check.checked) {
-                alert('위험을 무릅쓰고 동의해 주세요! 😉');
+                alert('모든 필수 개인정보 수집 항목에 동의해 주세요! 😉');
                 return;
             }
             const modal = document.getElementById('consent-modal');
@@ -923,310 +833,514 @@
             }, 500);
         }
 
-        // ---------------- [유리 깨짐 효과 캔버스] ----------------
-        const shatterCanvas = document.getElementById('shatter-canvas');
-        const sCtx = shatterCanvas.getContext('2d');
+        // ---------------- [웹 오디오 API 기반 합성 빗소리 생성기] ----------------
+        let audioCtx = null;
+        let rainNode = null;
+        let isAudioPlaying = false;
 
-        function resizeShatterCanvas() {
-            shatterCanvas.width = window.innerWidth;
-            shatterCanvas.height = window.innerHeight;
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+            whiteNoise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            whiteNoise.start();
+            rainNode = { source: whiteNoise, gain: gainNode };
         }
-        window.addEventListener('resize', resizeShatterCanvas);
-        resizeShatterCanvas();
 
-        let glassShards = [];
+        function toggleAudio() {
+            const btn = document.getElementById('audio-toggle');
+            if (!audioCtx) initAudio();
 
-        function GlassShard(x, y) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (isAudioPlaying) {
+                rainNode.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                btn.innerText = "재생";
+                isAudioPlaying = false;
+            } else {
+                rainNode.gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
+                btn.innerText = "음소거";
+                isAudioPlaying = true;
+            }
+        }
+
+        function stopRainAudio() {
+            if (audioCtx && rainNode && isAudioPlaying) {
+                rainNode.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+                document.getElementById('audio-toggle').innerText = "재생";
+                isAudioPlaying = false;
+            }
+        }
+
+        // ---------------- [인터랙티브 캔버스 & 물리 엔진] ----------------
+        const canvas = document.getElementById('rain-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let cardRects = [];
+        function updateCardObstacles() {
+            const cards = document.querySelectorAll('.gold-border-card');
+            cardRects = Array.from(cards).map(card => {
+                const r = card.getBoundingClientRect();
+                return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+            });
+        }
+        window.addEventListener('scroll', updateCardObstacles);
+        window.addEventListener('resize', updateCardObstacles);
+        setTimeout(updateCardObstacles, 500);
+
+        let raindrops = [];
+        let particles = [];
+        let fireworks = [];
+        let absorbedCount = 0;
+        let isSunny = false;
+
+        const DROP_COLORS = [
+            { r: 224, g: 242, b: 254 }, 
+            { r: 255, g: 255, b: 255 }, 
+            { r: 135, g: 206, b: 235 }  
+        ];
+
+        const FIREWORK_COLORS = [
+            { r: 239, g: 68, b: 68 },
+            { r: 249, g: 115, b: 22 },
+            { r: 245, g: 158, b: 11 },
+            { r: 236, g: 72, b: 153 },
+            { r: 254, g: 240, b: 138 }
+        ];
+
+        function Drop() {
+            this.reset();
+        }
+
+        Drop.prototype.reset = function() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * -200;
+            this.radius = Math.random() * 3 + 2.5;
+            this.speedY = Math.random() * 3 + 2.5;
+            this.speedX = 0;
+            this.color = DROP_COLORS[Math.floor(Math.random() * DROP_COLORS.length)];
+            this.isSliding = false;
+        };
+
+        Drop.prototype.update = function() {
+            if (isSunny) return;
+
+            let hitCard = false;
+            for (let rect of cardRects) {
+                if (this.x >= rect.left && this.x <= rect.right && this.y + this.radius >= rect.top && this.y - this.radius <= rect.top + 10) {
+                    hitCard = true;
+                    this.y = rect.top - this.radius;
+                    this.isSliding = true;
+                    this.speedX = (this.x > (rect.left + rect.right) / 2) ? 1.5 : -1.5;
+                    break;
+                }
+            }
+
+            if (hitCard) {
+                this.x += this.speedX;
+            } else {
+                this.speedX = 0;
+                this.y += this.speedY;
+            }
+
+            if (this.y > canvas.height) {
+                this.reset();
+            }
+        };
+
+        Drop.prototype.draw = function() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.85)`;
+            ctx.fill();
+        };
+
+        function SplashParticle(x, y, color) {
             this.x = x;
             this.y = y;
-            this.size = Math.random() * 25 + 10;
+            this.color = color;
+            this.radius = Math.random() * 3 + 1.5;
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 15 + 5;
+            const speed = Math.random() * 6 + 2;
             this.vx = Math.cos(angle) * speed;
             this.vy = Math.sin(angle) * speed;
-            this.rot = Math.random() * Math.PI * 2;
-            this.vRot = (Math.random() - 0.5) * 0.3;
             this.alpha = 1;
         }
 
-        GlassShard.prototype.update = function() {
+        SplashParticle.prototype.update = function() {
             this.x += this.vx;
             this.y += this.vy;
-            this.vy += 0.3; 
-            this.rot += this.vRot;
-            this.alpha -= 0.02;
+            this.vy += 0.15;
+            this.alpha -= 0.025;
         };
 
-        GlassShard.prototype.draw = function() {
-            sCtx.save();
-            sCtx.translate(this.x, this.y);
-            sCtx.rotate(this.rot);
-            sCtx.globalAlpha = Math.max(0, this.alpha);
-            sCtx.fillStyle = "rgba(224, 242, 254, 0.7)";
-            sCtx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-            sCtx.lineWidth = 1.5;
-
-            sCtx.beginPath();
-            sCtx.moveTo(0, -this.size / 2);
-            sCtx.lineTo(this.size / 2, this.size / 2);
-            sCtx.lineTo(-this.size / 2, this.size / 3);
-            sCtx.closePath();
-            sCtx.fill();
-            sCtx.stroke();
-            sCtx.restore();
+        SplashParticle.prototype.draw = function() {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+            ctx.fill();
+            ctx.restore();
         };
 
-        function triggerGlassShatter() {
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-
-            for (let i = 0; i < 70; i++) {
-                glassShards.push(new GlassShard(centerX, centerY));
-            }
-
-            document.body.classList.add('screen-shake');
-            setTimeout(() => {
-                document.body.classList.remove('screen-shake');
-            }, 400);
+        function FireworkParticle(x, y) {
+            this.x = x;
+            this.y = y;
+            this.color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+            this.radius = Math.random() * 4 + 2;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 10 + 3;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 1;
+            this.friction = 0.96;
+            this.gravity = 0.1;
         }
 
-        function renderShatter() {
-            sCtx.clearRect(0, 0, shatterCanvas.width, shatterCanvas.height);
-            for (let i = glassShards.length - 1; i >= 0; i--) {
-                const shard = glassShards[i];
-                shard.update();
-                shard.draw();
-                if (shard.alpha <= 0) {
-                    glassShards.splice(i, 1);
-                }
-            }
-            requestAnimationFrame(renderShatter);
-        }
-        renderShatter();
+        FireworkParticle.prototype.update = function() {
+            this.vx *= this.friction;
+            this.vy *= this.friction;
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= 0.015;
+        };
 
-        // ---------------- [날아오는 임팩트 애니메이션 (50% 기준)] ----------------
-        let lastTriggeredWeather = null;
+        FireworkParticle.prototype.draw = function() {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+            ctx.fill();
+            ctx.restore();
+        };
 
-        function triggerImpactEffect(weatherType) {
-            if (lastTriggeredWeather === weatherType) return;
-            lastTriggeredWeather = weatherType;
-
-            const sunObj = document.getElementById('flying-sun');
-            const umbrellaObj = document.getElementById('flying-umbrella');
-
-            const targetObj = (weatherType === 'sunny') ? sunObj : umbrellaObj;
-
-            targetObj.classList.remove('fly-in');
-            void targetObj.offsetWidth; // Reflow
-            targetObj.classList.add('fly-in');
-
-            // 0.5초 뒤 화면에 충돌하면서 유리 깨짐 발생
-            setTimeout(() => {
-                triggerGlassShatter();
+        function triggerFireworksAt(centerX, centerY) {
+            for (let burst = 0; burst < 3; burst++) {
                 setTimeout(() => {
-                    targetObj.classList.remove('fly-in');
-                }, 400);
-            }, 500);
-        }
-
-        // ---------------- [비 효과 & 드래그 인터랙션] ----------------
-        const rainCanvas = document.getElementById('rain-canvas');
-        const ctx = rainCanvas.getContext('2d');
-        let drops = [];
-        let isRaining = false;
-
-        function resizeRainCanvas() {
-            rainCanvas.width = window.innerWidth;
-            rainCanvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeRainCanvas);
-        resizeRainCanvas();
-
-        function RainDrop() {
-            this.x = Math.random() * rainCanvas.width;
-            this.y = Math.random() * -rainCanvas.height;
-            this.speed = Math.random() * 8 + 12;
-            this.length = Math.random() * 20 + 10;
-        }
-
-        function initRain() {
-            drops = [];
-            for (let i = 0; i < 120; i++) {
-                drops.push(new RainDrop());
+                    const offsetX = (Math.random() - 0.5) * 160;
+                    const offsetY = (Math.random() - 0.5) * 100;
+                    for (let i = 0; i < 60; i++) {
+                        fireworks.push(new FireworkParticle(centerX + offsetX, centerY + offsetY));
+                    }
+                }, burst * 150);
             }
         }
 
-        function drawRain() {
-            ctx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-            if (!isRaining) return;
+        for (let i = 0; i < 45; i++) {
+            raindrops.push(new Drop());
+        }
 
-            ctx.strokeStyle = 'rgba(147, 197, 253, 0.6)';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < drops.length; i++) {
-                const d = drops[i];
-                ctx.beginPath();
-                ctx.moveTo(d.x, d.y);
-                ctx.lineTo(d.x, d.y + d.length);
-                ctx.stroke();
+            if (!isSunny) {
+                raindrops.forEach(drop => {
+                    drop.update();
+                    drop.draw();
+                });
+            }
 
-                d.y += d.speed;
-                if (d.y > rainCanvas.height) {
-                    d.y = -d.length;
-                    d.x = Math.random() * rainCanvas.width;
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                const fw = fireworks[i];
+                fw.update();
+                fw.draw();
+                if (fw.alpha <= 0) fireworks.splice(i, 1);
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // ---------------- [우산 및 해 드래그 / 클릭 연출 구현] ----------------
+        const umbrellaWidget = document.getElementById('umbrella-widget');
+        const umbrellaIcon = document.getElementById('umbrella-icon');
+        const umbrellaCounter = document.getElementById('umbrella-counter');
+        const resetBtn = document.getElementById('reset-btn');
+        const sunContainer = document.getElementById('sun-container');
+
+        let isDraggingUmbrella = false;
+        let uOffsetX = 0, uOffsetY = 0;
+
+        umbrellaIcon.addEventListener('mousedown', (e) => {
+            isDraggingUmbrella = true;
+            const rect = umbrellaWidget.getBoundingClientRect();
+            uOffsetX = e.clientX - rect.left;
+            uOffsetY = e.clientY - rect.top;
+        });
+
+        // 해 아이콘 드래그 & 클릭 구분 구현
+        let isDraggingSun = false;
+        let sunOffsetX = 0, sunOffsetY = 0;
+        let sunDragMoved = false;
+
+        sunContainer.addEventListener('mousedown', (e) => {
+            isDraggingSun = true;
+            sunDragMoved = false;
+            const rect = sunContainer.getBoundingClientRect();
+            sunOffsetX = e.clientX - rect.left;
+            sunOffsetY = e.clientY - rect.top;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingUmbrella) {
+                const x = e.clientX - uOffsetX;
+                const y = e.clientY - uOffsetY;
+                umbrellaWidget.style.left = `${x}px`;
+                umbrellaWidget.style.top = `${y}px`;
+                umbrellaWidget.style.bottom = 'auto';
+                umbrellaWidget.style.right = 'auto';
+
+                const iconRect = umbrellaIcon.getBoundingClientRect();
+                const uCenterX = iconRect.left + iconRect.width / 2;
+                const uCenterY = iconRect.top + iconRect.height / 2;
+
+                if (!isSunny) {
+                    for (let i = 0; i < raindrops.length; i++) {
+                        const drop = raindrops[i];
+                        const dist = Math.hypot(drop.x - uCenterX, drop.y - uCenterY);
+
+                        if (dist < 35) {
+                            drop.reset();
+                            absorbedCount++;
+                            umbrellaCounter.innerText = `흡수한 물방울: ${absorbedCount} / 10`;
+
+                            if (absorbedCount >= 10) {
+                                turnSunny();
+                            }
+                        }
+                    }
                 }
             }
-            requestAnimationFrame(drawRain);
+
+            if (isDraggingSun) {
+                sunDragMoved = true;
+                const x = e.clientX - sunOffsetX;
+                const y = e.clientY - sunOffsetY;
+                sunContainer.style.left = `${x}px`;
+                sunContainer.style.top = `${y}px`;
+                sunContainer.style.transform = 'scale(1)';
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (isDraggingSun && !sunDragMoved) {
+                const rect = sunContainer.getBoundingClientRect();
+                triggerFireworksAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+            isDraggingUmbrella = false;
+            isDraggingSun = false;
+        });
+
+        // ---------------- [비 그침 및 화창한 테마 전환] ----------------
+        function turnSunny() {
+            isSunny = true;
+            stopRainAudio();
+
+            document.body.classList.add('sunny-theme');
+            umbrellaCounter.innerText = "☀️ 비가 그치고 화창해졌습니다!";
+            umbrellaIcon.style.backgroundColor = "#FEF3C7";
+            resetBtn.style.display = "block";
+
+            sunContainer.classList.add('show');
+            document.getElementById('nav-title').innerText = "맑게 갠 날씨의 AI 탐구 서비스";
+            document.getElementById('hero-title').innerText = "날이 맑게 갰습니다! ☀️";
         }
 
-        // ---------------- [Teachable Machine AI 로직] ----------------
-        const URL = "https://teachablemachine.withgoogle.com/models/bT4i3LwD3/"; 
+        // ---------------- [비 오는 날씨로 다시 초기화] ----------------
+        function resetRain() {
+            isSunny = false;
+            absorbedCount = 0;
+
+            document.body.classList.remove('sunny-theme');
+            umbrellaCounter.innerText = `흡수한 물방울: 0 / 10`;
+            umbrellaIcon.style.backgroundColor = "#FFFFFF";
+            resetBtn.style.display = "none";
+            sunContainer.classList.remove('show');
+
+            // 해 및 우산 위치 리셋
+            sunContainer.style.left = '50%';
+            sunContainer.style.top = '70px';
+            sunContainer.style.transform = 'translateX(-50%) scale(0)';
+
+            umbrellaWidget.style.left = 'auto';
+            umbrellaWidget.style.top = 'auto';
+            umbrellaWidget.style.bottom = '30px';
+            umbrellaWidget.style.right = '30px';
+
+            document.getElementById('nav-title').innerText = "학교 안의 작은 문제를 AI로 탐구하다";
+            document.getElementById('hero-title').innerText = "창밖 날씨 실시간 AI 판별 프로젝트";
+
+            raindrops.forEach(drop => drop.reset());
+        }
+
+        // ---------------- [티처블 머신 AI 모델 로직] ----------------
+        const URL = "https://teachablemachine.withgoogle.com/models/XilyKlHnOM/";
+
         let model, webcam, labelContainer, maxPredictions;
         let isRunning = false;
+        let animationFrameId = null;
 
         async function init() {
-            const startBtn = document.getElementById('start-btn');
-            const stopBtn = document.getElementById('stop-btn');
-            const statusMsg = document.getElementById('status-msg');
-            const errorMsg = document.getElementById('error-msg');
-            const placeholder = document.getElementById('placeholder-text');
+            if (isRunning) return;
+
+            const startBtn = document.getElementById("start-btn");
+            const stopBtn = document.getElementById("stop-btn");
+            const statusMsg = document.getElementById("status-msg");
+            const errorMsg = document.getElementById("error-msg");
 
             startBtn.disabled = true;
-            statusMsg.innerText = "AI 모델 및 카메라인식 로딩 중...";
             errorMsg.style.display = "none";
+            statusMsg.innerText = "모델 파일 및 카메라를 불러오는 중입니다...";
+
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
 
             try {
-                const modelURL = URL + "model.json";
-                const metadataURL = URL + "metadata.json";
-
                 model = await tmImage.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
 
-                const flip = true;
-                webcam = new tmImage.Webcam(300, 300, flip);
-                await webcam.setup();
+                const flip = true; 
+                webcam = new tmImage.Webcam(200, 200, flip); 
+                
+                await webcam.setup(); 
                 await webcam.play();
-
+                
                 isRunning = true;
-                window.requestAnimationFrame(loop);
+                stopBtn.disabled = false;
+                statusMsg.innerText = "실시간 분석 진행 중...";
+                document.getElementById("placeholder-text").style.display = "none";
 
-                document.getElementById("webcam-container").appendChild(webcam.canvas);
-                placeholder.style.display = "none";
+                const webcamContainer = document.getElementById("webcam-container");
+                webcamContainer.innerHTML = "";
+                webcamContainer.appendChild(webcam.canvas);
 
                 labelContainer = document.getElementById("label-container");
-                labelContainer.innerHTML = "";
+                labelContainer.innerHTML = ""; 
                 for (let i = 0; i < maxPredictions; i++) {
+                    const className = model.getClassLabels()[i];
+                    
                     const barItem = document.createElement("div");
                     barItem.className = "bar-item";
                     barItem.innerHTML = `
                         <div class="bar-info">
-                            <span class="bar-name">클래스</span>
-                            <span class="bar-val">0%</span>
+                            <span>${className}</span>
+                            <span id="percent-${i}">0%</span>
                         </div>
                         <div class="bar-track">
-                            <div class="bar-fill"></div>
+                            <div class="bar-fill" id="fill-${i}"></div>
                         </div>
                     `;
                     labelContainer.appendChild(barItem);
                 }
 
-                stopBtn.disabled = false;
-                statusMsg.innerText = "실시간 감지 작동 중";
-            } catch (err) {
-                errorMsg.innerText = "카메라를 켤 수 없거나 모델을 로드하는 중 오류가 발생했습니다: " + err.message;
-                errorMsg.style.display = "block";
+                window.requestAnimationFrame(loop);
+
+            } catch (error) {
+                console.error(error);
                 statusMsg.innerText = "";
+                errorMsg.style.display = "block";
+                
+                if (error.name === "NotAllowedError" || error.message.includes("permission")) {
+                    errorMsg.innerText = "카메라 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해 주세요.";
+                } else {
+                    errorMsg.innerText = "카메라를 시작할 수 없습니다. 장치가 연결되어 있는지 확인해 주세요.";
+                }
                 startBtn.disabled = false;
             }
         }
 
         async function loop() {
-            if (isRunning) {
-                webcam.update();
-                await predict();
-                window.requestAnimationFrame(loop);
-            }
+            if (!isRunning) return;
+            webcam.update(); 
+            await predict();
+            animationFrameId = window.requestAnimationFrame(loop);
         }
 
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
-            let topClass = "";
-            let maxProb = -1;
-
-            let rainProb = 0;
-            let sunnyProb = 0;
+            
+            let highestProb = -1;
+            let highestClass = "-";
 
             for (let i = 0; i < maxPredictions; i++) {
                 const className = prediction[i].className;
                 const probability = prediction[i].probability;
+                const percent = (probability * 100).toFixed(1);
 
-                if (probability > maxProb) {
-                    maxProb = probability;
-                    topClass = className;
-                }
+                document.getElementById(`percent-${i}`).innerText = `${percent}%`;
+                document.getElementById(`fill-${i}`).style.width = `${percent}%`;
 
-                if (className.includes("비")) rainProb = probability;
-                if (className.includes("맑음")) sunnyProb = probability;
-
-                const percent = (probability * 100).toFixed(1) + "%";
-                const barItem = labelContainer.childNodes[i];
-                if (barItem) {
-                    barItem.querySelector(".bar-name").innerText = className;
-                    barItem.querySelector(".bar-val").innerText = percent;
-                    barItem.querySelector(".bar-fill").style.width = percent;
+                if (probability > highestProb) {
+                    highestProb = probability;
+                    highestClass = className;
                 }
             }
 
-            document.getElementById("top-prediction").innerText = `${topClass} (${(maxProb * 100).toFixed(1)}%)`;
-
-            const sunContainer = document.getElementById("sun-container");
-
-            // 50% (0.5) 이상일 때 테마 변경 및 거대 아이콘 비행 애니메이션 실행
-            if (rainProb >= 0.50) {
-                document.body.classList.remove("sunny-theme");
-                sunContainer.classList.remove("show");
-                isRaining = true;
-                drawRain();
-                triggerImpactEffect("rain");
-            } else if (sunnyProb >= 0.50) {
-                document.body.classList.add("sunny-theme");
-                sunContainer.classList.add("show");
-                isRaining = false;
-                triggerImpactEffect("sunny");
-            }
+            document.getElementById("top-prediction").innerText = `${highestClass} (${(highestProb * 100).toFixed(1)}%)`;
         }
 
         function stopWebcam() {
+            if (!isRunning) return;
+
+            isRunning = false;
+            if (animationFrameId) {
+                window.cancelAnimationFrame(animationFrameId);
+            }
+
             if (webcam) {
                 webcam.stop();
             }
-            isRunning = false;
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('stop-btn').disabled = true;
-            document.getElementById('status-msg').innerText = "카메라가 중지되었습니다.";
-        }
 
-        // ---------------- [오디오 핸들러] ----------------
-        let audioCtx;
-        let isPlayingAudio = false;
-
-        function toggleAudio() {
-            const btn = document.getElementById('audio-toggle');
-            if (!isPlayingAudio) {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                isPlayingAudio = true;
-                btn.innerText = "일시정지";
-            } else {
-                isPlayingAudio = false;
-                btn.innerText = "재생";
-            }
-        }
-
-        function resetRain() {
-            isRaining = true;
-            initRain();
-            drawRain();
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("stop-btn").disabled = true;
+            document.getElementById("status-msg").innerText = "분석이 중지되었습니다.";
+            document.getElementById("placeholder-text").style.display = "block";
+            document.getElementById("webcam-container").innerHTML = "";
+            document.getElementById("top-prediction").innerText = "-";
+            document.getElementById("label-container").innerHTML = "";
         }
     </script>
 </body>
